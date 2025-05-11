@@ -1,0 +1,29 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/spfx-serve.schema.json",
+  "port": 4321,
+  "https": true,
+  "serveConfigurations": {
+    "default": {
+      "pageUrl": "https://{tenantDomain}/SitePages/myPage.aspx",
+      "fieldCustomizers": {
+        "InternalFieldName": {
+          "id": "46870f70-3b6d-440b-98db-13593ccb05b5",
+          "properties": {
+            "sampleText": "Value"
+          }
+        }
+      }
+    },
+    "relatedDocumentFieldExtension": {
+      "pageUrl": "https://{tenantDomain}/SitePages/myPage.aspx",
+      "fieldCustomizers": {
+        "InternalFieldName": {
+          "id": "46870f70-3b6d-440b-98db-13593ccb05b5",
+          "properties": {
+            "sampleText": "Value"
+          }
+        }
+      }
+    }
+  }
+}
