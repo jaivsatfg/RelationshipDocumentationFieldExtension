@@ -11,7 +11,17 @@
       ]
     }
   },
-  "externals": {},
+  "externals": {
+    "jquery": {
+      "path": "node_modules/jquery/dist/jquery.min.js",
+      "globalName": "jQuery"
+    },
+    "gijgo": {
+      "path": "node_modules/gijgo/js/gijgo.min.js",
+      "globalName": "gijgo",
+      "globalDependencies": ["jquery"]
+    }    
+  },
   "localizedResources": {
     "RelatedDocumentFieldExtensionFieldCustomizerStrings": "lib/extensions/relatedDocumentFieldExtension/loc/{locale}.js"
   }

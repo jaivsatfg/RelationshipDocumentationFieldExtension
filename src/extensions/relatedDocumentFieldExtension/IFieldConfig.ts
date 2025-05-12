@@ -1,8 +1,8 @@
 export interface IFieldConfig {
     termStoreId: string;
     termSetId: string;
-    serveiTermId: string;
-    tipologiaTermId: string;
+    tiposServiciosTermId: string;
+    clasifDocsTermId: string;
     managerDocumentsUrl: string;
     managerDocumentsListId: string;
   }

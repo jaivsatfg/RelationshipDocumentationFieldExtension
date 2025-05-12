@@ -1,4 +1,5 @@
 import * as React from 'react';
+import "jquery";
 import 'datatables.net-bs5/css/dataTables.bootstrap5.css';
 import { DocInfo } from './IDocInfo';
 import 'datatables.net-select-dt';
@@ -8,8 +9,6 @@ import styles from './RelatedDocumentFieldExtension.module.scss';
 
 const $ = require('jquery');
 $.DataTable = require('datatables.net-bs5');
-
-
 
 interface IDocumentsTableProps {
     values: DocInfo[];

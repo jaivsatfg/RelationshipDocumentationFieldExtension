@@ -1,21 +1,22 @@
 import * as React from "react";
 import { CommandBarButton, ContextualMenu, DefaultButton, FontWeights, getFocusStyle, getTheme, IButtonStyles, IconButton, IDragOptions, IIconProps, IStackProps, Label, mergeStyleSets, Modal, ProgressIndicator, Stack, StackItem } from "office-ui-fabric-react";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import "gijgo";
-import "gijgo/css/gijgo.min.css";
-import * as jQuery from "jquery";
-import 'datatables.net'
-
+import { Tree } from 'primereact/tree';
+import { DataTable, DataTableSelectionMultipleChangeEvent } from 'primereact/datatable';
+import { Column } from 'primereact/column';
 
 import { SPHttpClientResponse } from '@microsoft/sp-http';
 import { ISoapTaxonomyResponse } from "./ISoapTaxonomyResponse";
 import { AppContext, IAppContext } from "../IContext";
 import { DocInfo } from "./IDocInfo";
-import DocumentsTable from "./DocumentsTable";
-import { DomSelector } from "datatables.net-bs5";
 import { IRelatedDocument } from "./IRelatedDocument";
+import 'bootstrap/dist/css/bootstrap.min.css';
 import styles from "./RelatedDocumentFieldExtension.module.scss";
+import 'primeicons/primeicons.css';
+import 'primereact/resources/primereact.css';
+import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import RelatedDocumentFieldExtension from "./RelatedDocumentFieldExtension";
+import { TreeNode } from "primereact/treenode";
+
 
 export interface ILinkDocumentsProps {
     elementName: string;
@@ -27,72 +28,85 @@ export interface ILinkDocumentsProps {
 export interface ILinkDocumentsStates {
     modalVisible: boolean;
     modalTreeUpdating: boolean;
+    selectedTreeKeys: TreeNode[];
     itemsToSelect: DocInfo[];
+    selectedItemsToAdd: DocInfo[];
     relatedItems: DocInfo[];
     saving: boolean;
     errorMessage: string;
 }
 
+
 class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsStates> {
     static contextType = AppContext;
     private treeInitialization: boolean = false;
     private modalClosing: boolean = false;
-    private tree: Types.Tree;
-    private selectedItems: DocInfo[];
+    // private selectedItems: DocInfo[];
     private savedItems: DocInfo[];
-    private prevSelectedNode: DomSelector;
     private isCallFromNotificationsList: boolean;
-    private isCallFromDocsTreballList: boolean;
+    private isCallFromDocsTrabajolList: boolean;
 
     public constructor(props: ILinkDocumentsProps | Readonly<ILinkDocumentsProps>) {
         super(props);
+
         this.onDismiss = this.onDismiss.bind(this);
         this.state = {
             modalVisible: this.props.isModalOpen,
             modalTreeUpdating: false,
             itemsToSelect: [],
+            selectedItemsToAdd: [],
+            selectedTreeKeys: [],
             relatedItems: this.props.items,
             saving: false,
             errorMessage: ''
         }
-        this.handleSelectedDocuments = this.handleSelectedDocuments.bind(this);
+        // this.handleSelectedDocuments = this.handleSelectedDocuments.bind(this);
         this.insertSelectedItems = this.insertSelectedItems.bind(this);
         this.itemsSave = this.itemsSave.bind(this);
         this.selectedItemToBeRemoved = this.selectedItemToBeRemoved.bind(this);
         this.removedSelectedItem = this.removedSelectedItem.bind(this);
+        this.treeNodeSelect = this.treeNodeSelect.bind(this);
+        this.itemsToSelectionChange = this.itemsToSelectionChange.bind(this);
     }
 
-    private handleSelectedDocuments(docs: DocInfo[]): void {
-        const ctx: IAppContext = this.context;
-        this.selectedItems = docs.map((d: DocInfo) => {
-            let currentUrl: string = d.url;
-            if (currentUrl.indexOf(ctx.documentsManagerRelativeWebUrl) != -1) {
-                currentUrl = '/' + d.url.toString().split('/').splice(3).join('/');
-            }
-            return Object.assign(d, { url: currentUrl });
-        });
-    }
+    // private handleSelectedDocuments(docs: DocInfo[]): void {
+    //     const ctx: IAppContext = this.context;
+    //     this.selectedItems = docs.map((d: DocInfo) => {
+    //         let currentUrl: string = d.url;
+    //         if (currentUrl.indexOf(ctx.documentsManagerRelativeWebUrl) != -1) {
+    //             currentUrl = '/' + d.url.toString().split('/').splice(3).join('/');
+    //         }
+    //         return Object.assign(d, { url: currentUrl });
+    //     });
+    // }
 
     private selectedItemToBeRemoved(sender: React.MouseEvent<HTMLDivElement>): void {
         const currentIdx: number = this.state.relatedItems.findIndex((doc: DocInfo) => {
             return '' + doc.id === sender.currentTarget.dataset.docid;
         });
         if (currentIdx !== -1) {
-            const items = [...this.state.relatedItems];
-            items[currentIdx].selected = !items[currentIdx].selected;
-            this.setState({ relatedItems: items });
+            this.setState(prevState => {
+                const items = [...prevState.relatedItems];
+                const currentItem = items[currentIdx];
+
+                items[currentIdx] = {
+                    ...currentItem,
+                    selected: !currentItem.selected
+                };
+
+                return { relatedItems: items };
+            });
         }
     }
+
     private removedSelectedItem = (): void => {
-        this.setState({
-            relatedItems: this.state.relatedItems.filter((doc: DocInfo) => {
-                return !doc.selected;
-            }),
-        });
-    }
+        this.setState(prevState => ({
+            relatedItems: prevState.relatedItems.filter((doc: DocInfo) => !doc.selected)
+        }));
+    };
 
     private insertSelectedItems(): void {
-        const items: DocInfo[] = this.selectedItems.filter((d: DocInfo) => {
+        const items: DocInfo[] = this.state.selectedItemsToAdd.filter((d: DocInfo) => {
             return this.state.relatedItems.findIndex((doc: DocInfo) => {
                 return doc.id === d.id;
             }) === -1;
@@ -148,7 +162,7 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                     'DocuRelaJson': JSON.stringify(docRelaJson)
                 };
             }
-            ctx.updateSharePointItem && await ctx.updateSharePointItem(this.isCallFromNotificationsList || this.isCallFromDocsTreballList ? ctx.webUrl : ctx.documentsManagerWebUrl, ctx.localListTitle, ctx.localListItemId, objectToUpdate).then(() => {
+            ctx.updateSharePointItem && await ctx.updateSharePointItem(this.isCallFromNotificationsList || this.isCallFromDocsTrabajolList ? ctx.webUrl : ctx.documentsManagerWebUrl, ctx.localListTitle, ctx.localListItemId, objectToUpdate).then(() => {
                 this.savedItems = Array.from(this.state.relatedItems);
                 this.onDismiss();
             }).catch((error: TypeError) => {
@@ -164,7 +178,7 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
     public componentDidMount(): void {
         const ctx: IAppContext = this.context;
         this.isCallFromNotificationsList = ctx.webUrl !== '' && ctx.localListTitle.toLocaleLowerCase() === 'notificaciones' ? true : false;
-        this.isCallFromDocsTreballList = ctx.webUrl !== '' && ctx.localListTitle.toLocaleLowerCase() === 'DocumentosTrabajo' ? true : false;
+        this.isCallFromDocsTrabajolList = ctx.webUrl !== '' && ctx.localListTitle.toLocaleLowerCase() === 'DocumentosTrabajo' ? true : false;
         this.savedItems = this.props.items;
         if (this.props.isModalOpen) {
             this.setState({
@@ -186,7 +200,8 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
             if (this.state.modalTreeUpdating || this.state.modalVisible !== this.props.isModalOpen) {
                 this.setState({
                     modalVisible: this.props.isModalOpen,
-                    modalTreeUpdating: false
+                    modalTreeUpdating: false,
+                    selectedTreeKeys: []
                 });
             }
         } else {
@@ -195,7 +210,8 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                     modalTreeUpdating: true
                 });
             } else {
-                this.createTree();
+                RelatedDocumentFieldExtension.modalIsOpen = true;
+                // this.createTree();
             }
         }
     }
@@ -355,7 +371,8 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
             styles: {
                 root: {
                     'width': 'calc(100% - 270px)',
-                    'overflow': 'hidden'
+                    'overflow': 'hidden',
+                    'padding-left': '15px'
                 }
             },
         };
@@ -389,6 +406,13 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
         const titleId = 'modalTreeDocRela';
         const addIcon: IIconProps = { iconName: 'IncreaseIndentArrow' };
         const removeIcon: IIconProps = { iconName: 'DecreaseIndentArrow' };
+
+
+        function handleTreeNodeClick(node: TreeNode): void {
+            console.log('Nodo clickeado:', node);
+        }
+
+
         return (
             <Modal
                 isModeless={true}
@@ -402,7 +426,7 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
             >
                 <div className={contentStyles.header}>
                     <h2 className={contentStyles.heading} id={titleId}>
-                        Assignació de documents relacionats de {this.props.elementName}
+                        Assignación de documentos relacionados de {this.props.elementName}
                     </h2>
                     <IconButton
                         styles={iconButtonStyles}
@@ -416,18 +440,44 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                         <StackItem className={classNames.itemLeft}>
                             <Stack {...stackLeft}>
                                 <StackItem {...stackItemPropsTree} >
-                                    <div className="treeDocuments" />
+                                    <div className="treeDocuments">
+                                        <Tree value={this.props.terms}
+                                            nodeTemplate={(node, options) => (
+                                                <div onClick={() => handleTreeNodeClick(node)}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={this.isTreeNodeChecked(node)}
+                                                        onChange={(e) => this.treeNodeSelect(e, node)}
+
+                                                        style={{
+                                                            'marginRight': '0.5rem',
+                                                            'border': '2px solid #d1d5db',
+                                                            'borderRadius': '6px',
+                                                            'transform': 'scale(1.5)'
+                                                        }}
+                                                    />
+                                                    <span>{node.label}</span>
+                                                </div>
+                                            )} className="w-full md:w-30rem" />
+                                    </div>
                                 </StackItem>
                                 <StackItem {...stackItemPropsDatatable} data-is-focusable={true}>
                                     <Stack {...stackTitle}>
                                         <StackItem>
-                                            <span className={classNames.itemTitle}>Documents relacionats disponibles</span>
+                                            <span className={classNames.itemTitle}>Documentos relacionados disponibles</span>
                                         </StackItem>
                                         <StackItem>
                                             <CommandBarButton iconProps={addIcon} text="Agregar" className={styles.btnAction} onClick={this.insertSelectedItems} />
                                         </StackItem>
                                     </Stack>
-                                    <DocumentsTable values={this.state.itemsToSelect} handleSelectedItems={this.handleSelectedDocuments} />
+                                    <DataTable value={this.state.itemsToSelect} paginator rows={7} selectionMode={null}
+                                        dataKey="id" onSelectionChange={this.itemsToSelectionChange}
+                                        selection={this.state.selectedItemsToAdd}
+                                        tableStyle={{ minWidth: '50rem' }}>
+                                        <Column selectionMode="multiple" headerStyle={{ width: '3rem' }}></Column>
+                                        <Column field="name" header="Nombre"></Column>
+                                        <Column field="url" header="Ruta"></Column>
+                                    </DataTable>
                                 </StackItem>
                             </Stack>
                         </StackItem>
@@ -436,7 +486,7 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                                 <StackItem>
                                     <Stack {...stackTitle}>
                                         <StackItem>
-                                            <span className={classNames.itemTitle}>Documents seleccionats</span>
+                                            <span className={classNames.itemTitle}>Documentos seleccionados</span>
                                         </StackItem>
                                         <StackItem>
                                             <CommandBarButton iconProps={removeIcon} text="Quitar" className={styles.btnAction} onClick={this.removedSelectedItem} />
@@ -457,7 +507,6 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                                                         <div className={classNames.itemName}>{doc.name}</div>
                                                         <div className={classNames.itemIndex}>{doc.url}</div>
                                                     </div>
-
                                                 </div>
                                             )
                                         })
@@ -479,32 +528,24 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
         );
     }
 
-    private createTree(): void {
-        RelatedDocumentFieldExtension.modalIsOpen = true;
+    private isTreeNodeChecked(node: TreeNode): boolean {
+        if (!node.key) return false;
+        return this.state.selectedTreeKeys.filter((t) => { return t.key === node.key?.toString() }).length > 0
+    }
+
+
+    private treeNodeSelect = (e: React.ChangeEvent<HTMLInputElement>, node: TreeNode): void => {
         const currentInstance: LinkDocuments = this;
-        const $ = require('jquery');
-        $.DataTable = require('datatables.net');
-        this.tree = $('.treeDocuments').tree({
-            primaryKey: 'id',
-            uiLibrary: 'bootstrap5',
-            dataSource: this.props.terms,
-            cascadeCheck: false,
-            checkboxes: true,
-            checkedField: 'selected',
-            textField: 'text'
-        });
-        this.tree.off('checkboxChange');
-        this.tree.on('checkboxChange', (e, node, record, state) => {
-            if (state !== 'checked' || currentInstance.treeInitialization) {
-                return;
-            }
+        const isChecked = e.currentTarget.checked;
 
-            $(this.prevSelectedNode).find('input[type="checkbox"]:first').prop('checked', false);
-            this.prevSelectedNode = node;
+        if (currentInstance.treeInitialization) {
+            return;
+        }
+
+        if (isChecked && node.key != undefined) {
+            //Busco los documentos
             currentInstance.treeInitialization = true;
-
-
-            currentInstance.getDocuments(record).then((values: DocInfo[]) => {
+            currentInstance.getDocuments(node.key.toString()).then((values: DocInfo[]) => {
                 currentInstance.treeInitialization = false;
                 currentInstance.setState({
                     itemsToSelect: values
@@ -512,25 +553,118 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
             }).catch(() => {
                 currentInstance.treeInitialization = false;
             });
-        });
+            this.setState({
+                selectedTreeKeys: [node],
+                selectedItemsToAdd: []
+            });
+        }
+    }
+    // private treeSelectionChange = (e: TreeEventNodeEvent) => {
+
+    //     // const newSelection = { ...this.state.selectedTreeKeys };
+
+    //     // if (node.key) {
+    //     //     if (e.target.checked) {
+    //     //         newSelection[node.key] = { checked: true };
+    //     //     } else {
+    //     //         delete newSelection[node.key];
+    //     //     }
+
+    //     //     setSelectedKeys(newSelection);
+    //     // }
+
+    //     const currentInstance: LinkDocuments = this;
+
+    //     if (currentInstance.treeInitialization /*state !== 'checked' ||*/) {
+    //         return;
+    //     }
+
+    //     // const filtered: { [key: string]: { checked: boolean; partialChecked: boolean; } } = {};
+    //     // for (const key in e.value) {
+    //     //     if (e.value[key].checked) {
+    //     //         filtered[key] = e.value[key];
+    //     //     }
+    //     // }
+    //     // this.setState({
+    //     //     selectedTreeKeys: filtered
+    //     // });
+
+
+    //     // if (filtered && Object.keys(filtered).length > 0) {
+    //     //     const keyTerm: string = Object.keys(filtered)[0];
+    //     //     if (keyTerm) {
+    //     //         currentInstance.treeInitialization = true;
+    //     //         currentInstance.getDocuments(keyTerm).then((values: DocInfo[]) => {
+    //     //             currentInstance.treeInitialization = false;
+    //     //             currentInstance.setState({
+    //     //                 itemsToSelect: values
+    //     //             });
+    //     //         }).catch(() => {
+    //     //             currentInstance.treeInitialization = false;
+    //     //         });
+    //     //     }
+    //     // }
+    // }
+
+    private itemsToSelectionChange = (e: DataTableSelectionMultipleChangeEvent<DocInfo[]>): void => {
+        const newSelection = e.value || []; // selección actualizada
+        const prevSelection = this.state.selectedItemsToAdd;
+
+        // Detectar si fue una selección o deselección
+        const added = newSelection.filter(item => !prevSelection.some(p => p.id === item.id));
+        const removed = prevSelection.filter(item => !newSelection.some(n => n.id === item.id));
+
+        // Solo actualizar si hubo cambio
+        if (added.length > 0 || removed.length > 0) {
+            this.setState({
+                selectedItemsToAdd: newSelection
+            });
+        }
+
+        // const checked = (e.originalEvent as React.ChangeEvent<HTMLInputElement>).target.checked;
+        // if (checked) {
+        //     this.setState(prevState => ({
+        //         selectedItemsToAdd: [...prevState.selectedItemsToAdd, ...e.value]
+        //     }));
+        // } else {
+        //     const selectdIds = e.value.map(v => { return v.id });
+        //     this.setState(prevState => ({
+        //         selectedItemsToAdd: prevState.selectedItemsToAdd.filter((t) => { return selectdIds.indexOf(t.id) === -1 })
+        //     }));
+        // }
     }
 
-    private getDocuments(node: ISoapTaxonomyResponse): Promise<DocInfo[]> {
+
+
+    private getDocuments(keyTerm: string): Promise<DocInfo[]> {
         const ctx: IAppContext = this.context;
+        //Buscamos el TemrId de este key
+        const node: ISoapTaxonomyResponse | undefined = this.findNodeByKey(this.props.terms, keyTerm);
         return new Promise<DocInfo[]>((resolve, reject) => {
             const re = /\'/gi;
             if (node && node.info && node.info.length > 0) {
-                const folderName = (node.info[0].parentLabel.split(';').splice(1).join('/') + '/' + node.text).replace(re, '\'\'');
-                const params = {
+                let folderName = (node.info[0].parentLabel.split(';').splice(1).join('/') + '/' + node.text).replace(re, '\'\'');
+                if (!folderName.startsWith('/')) {
+                    folderName = '/' + folderName;
+                }
+                let params = {
                     '$select': 'Id,File/Name,File/ServerRelativeUrl,File/LinkingUri',
-                    '$filter': ''.concat(`FSObjType eq 0 and FileDirRef eq '${ctx.documentsManagerRelativeWebUrl.concat('/', ctx.documentsManagerListTitle, '/Documents privats/', folderName)}'`,
-                        ' or ', `FSObjType eq 0 and FileDirRef eq '${ctx.documentsManagerRelativeWebUrl.concat('/', ctx.documentsManagerListTitle, '/Documents publics/', folderName)}'`),
+                    '$filter': 'startswith(FileDirRef,'.concat(`'${ctx.documentsManagerRelativeWebUrl.concat('/', ctx.documentsManagerListTitle, folderName)}')`, ' and FSObjType eq 0'),
                     '$expand': 'File',
-                    '$top': 5000
+                    '$top': '5000'
                 };
+                if (node.children.length === 0) {
+                    params = {
+                        '$select': 'Id,File/Name,File/ServerRelativeUrl,File/LinkingUri',
+                        '$filter': `FSObjType eq 0 and FileDirRef eq '${ctx.documentsManagerRelativeWebUrl.concat('/', ctx.documentsManagerListTitle, folderName)}'`,
+                        '$expand': 'File',
+                        '$top': '5000'
+                    };
+                }
+
 
                 const currentUrl = ctx.documentsManagerWebUrl.concat(`/_api/web/Lists/GetByTitle('`, encodeURIComponent(ctx.documentsManagerListTitle), `')`,
-                    '/items?', jQuery.param(params));
+                    '/items?', new URLSearchParams(params).toString());
 
                 ctx.spHttpClient && ctx.spHttpConfiguration && ctx.spHttpClient.get(currentUrl, ctx.spHttpConfiguration)
                     .then((response: SPHttpClientResponse) => {
@@ -582,42 +716,57 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
         });
     }
 
+    private findNodeByKey(tree: ISoapTaxonomyResponse[], keyToFind: string): ISoapTaxonomyResponse | undefined {
+        for (const node of tree) {
+            if (node.key === keyToFind) {
+                return node;
+            }
+            if (node.children) {
+                const found = this.findNodeByKey(node.children, keyToFind);
+                if (found) {
+                    return found;
+                }
+            }
+        }
+        return undefined;
+    }
+
     private async manageRelatedDocumentsList(): Promise<void> {
         const ctx: IAppContext = this.context;
         return new Promise<void>((resolve, reject) => {
 
-            /* Si lo llamo de DocsTreball no debo crear nada en la lista DocumentsRelacionats
+            /* Si lo llamo de DocumentosTrabajo no debo crear nada en la lista DocumentsRelacionats
                porque el documento o nueva version del documento no está publicado
                y quien se encarga de completar esta lista a la hora de la publicación es el powerAutomate.
             */
-            if (this.isCallFromDocsTreballList) {
+            if (this.isCallFromDocsTrabajolList) {
                 resolve();
                 return;
             }
 
 
-            /* La lista DocumentsRelacionats juega dos papeles diferentes a la hora agregar o eliminar items
+            /* La lista DocumentosRelacionados juega dos papeles diferentes a la hora agregar o eliminar items
                Escenario 1: Se relaciona uno o varios documentos a una notificación
                Escenario 2: Se relaciona uno o varios documentos a otro documento
 
-               Es por ello, para el escenario 1 tenemos en cuenta el campo 'IdNotificacio' 
-               y en el escenario 2 siempre utilizamos los items con 'IdNotificacio' eq 0
+               Es por ello, para el escenario 1 tenemos en cuenta el campo 'IdNotificacion' 
+               y en el escenario 2 siempre utilizamos los items con 'IdNotificacion' eq 0
             */
 
-            const listName = 'DocumentsRelacionats';
+            const listName = 'DocumentosRelacionados';
 
             const params = {
-                '$select': 'ID,IdDocumentRelacionat,IdDocument',
+                '$select': 'ID,IdDocumentoRelacionado,IdDocumento',
                 '$filter': ''.concat(`Title eq '${ctx.documentsManagerListTitle}'`,
-                    ` and IdBibliotecaDocuments eq '${ctx.documentsManagerListId}'`,
-                    this.isCallFromNotificationsList ? '' : ` and IdDocument eq ${ctx.documentsManagerListItemId.toString()} `,
-                    ` and IdNotificacio eq ${this.isCallFromNotificationsList ? ctx.localListItemId : 0}`),
-                '$top': 5000
+                    ` and IdBibliotecaDocumentos eq '${ctx.documentsManagerListId}'`,
+                    this.isCallFromNotificationsList ? '' : ` and IdDocumento eq ${ctx.documentsManagerListItemId.toString()} `,
+                    ` and IdNotificacion eq ${this.isCallFromNotificationsList ? ctx.localListItemId : 0}`),
+                '$top': '5000'
             };
 
             //Busco todos los elementos relacionados al item ID que estoy modificando en la lista DocumentsRelacionats
             const currentUrl = ctx.documentsManagerWebUrl.concat(`/_api/web/Lists/GetByTitle('`, encodeURIComponent(listName), `')`,
-                '/items?', jQuery.param(params));
+                '/items?', new URLSearchParams(params).toString());
 
             ctx.spHttpClient && ctx.spHttpConfiguration && ctx.spHttpClient.get(currentUrl, ctx.spHttpConfiguration)
                 .then((response: SPHttpClientResponse) => {
@@ -625,8 +774,8 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                         type itemValues = { value: IRelatedDocument[]; };
                         response.json().then((r: itemValues) => {
                             type relatedItemState = { idItem: number, idDoc: number, state: string };
-                            let idsOnListDocRelacionats: relatedItemState[] = [];
-                            idsOnListDocRelacionats = r.value
+                            let idsOnListDocRelacionados: relatedItemState[] = [];
+                            idsOnListDocRelacionados = r.value
                                 .filter((it: IRelatedDocument) => {
                                     return typeof it.IdDocumentoRelacionado !== 'undefined' && it.IdDocumentoRelacionado !== null;
                                 }).map((it: IRelatedDocument): relatedItemState => {
@@ -641,7 +790,7 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                             const itemsToCreate: IRelatedDocument[] = [];
                             this.state.relatedItems.forEach((docToMakeRelations: DocInfo) => {
                                 //Si el item no existe en la lista DocumentsRelacionats lo agrego                                
-                                const currentRelaDoc: relatedItemState = idsOnListDocRelacionats.filter((d: relatedItemState) => {
+                                const currentRelaDoc: relatedItemState = idsOnListDocRelacionados.filter((d: relatedItemState) => {
                                     return d.idDoc === docToMakeRelations.id;
                                 })[0];
                                 if (!currentRelaDoc) {
@@ -669,6 +818,8 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                                 }
                             });
 
+
+
                             (async function () {
                                 await Promise.all(
                                     [
@@ -680,7 +831,7 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                                         ),
                                         await Promise.all(
                                             //Elimino los que sobran
-                                            idsOnListDocRelacionats.filter((r: relatedItemState) => { return r.state === ''; })
+                                            idsOnListDocRelacionados.filter((r: relatedItemState) => { return r.state === ''; })
                                                 .map((r: relatedItemState) => {
                                                     return ctx.deleteSharePointItem && ctx.deleteSharePointItem(ctx.documentsManagerWebUrl, 'DocumentosRelacionados', r.idItem);
                                                 })
@@ -689,12 +840,12 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                             })().then(() => {
                                 resolve();
                                 return;
-                            }).catch(() => {
-                                const errorMessage: string = "Error in Promise.all from DocumentosRelacionados items assingment.";
+                            }).catch((e) => {
+                                const errorMessage: string = "Error in Promise.all from DocumentosRelacionados items assignment.";
                                 this.onError(errorMessage);
                                 reject(errorMessage);
                             });
-                        }).catch((e: string) => {
+                        }).catch((e) => {
                             this.onError(e);
                         });
                     } else {

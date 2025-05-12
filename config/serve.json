@@ -4,10 +4,10 @@
   "https": true,
   "serveConfigurations": {
     "default": {
-      "pageUrl": "https://{tenantDomain}/SitePages/myPage.aspx",
+      "pageUrl": "https://{tenantDomain}/DocumentosPublicados/Forms/AllItems.aspx",
       "fieldCustomizers": {
-        "InternalFieldName": {
-          "id": "46870f70-3b6d-440b-98db-13593ccb05b5",
+        "DocuRelaJson": {
+          "id": "5a9c0370-d597-4b95-9616-830585a24d63",
           "properties": {
             "sampleText": "Value"
           }
@@ -15,10 +15,10 @@
       }
     },
     "relatedDocumentFieldExtension": {
-      "pageUrl": "https://{tenantDomain}/SitePages/myPage.aspx",
+      "pageUrl": "https://{tenantDomain}/DocumentosPublicados/Forms/AllItems.aspx",
       "fieldCustomizers": {
-        "InternalFieldName": {
-          "id": "46870f70-3b6d-440b-98db-13593ccb05b5",
+        "DocuRelaJson": {
+          "id": "5a9c0370-d597-4b95-9616-830585a24d63",
           "properties": {
             "sampleText": "Value"
           }

@@ -25,6 +25,9 @@
     "gijgo": "^1.9.14",
     "jquery": "^3.7.1",
     "office-ui-fabric-react": "^7.204.1",
+    "prime-react": "^1.0.0",
+    "primeicons": "^7.0.0",
+    "primereact": "^10.9.5",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "tslib": "2.3.1"

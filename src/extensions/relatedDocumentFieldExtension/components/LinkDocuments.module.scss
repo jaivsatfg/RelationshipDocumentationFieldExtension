@@ -1,3 +1,14 @@
-*, :after, ::before {
+*,
+:after,
+::before {
     box-sizing: content-box;
+    padding: 0;
 }
+
+ul {
+    padding: 0;
+}
+
+p-tree .p-tree-container {
+    padding: 0 !important;
+  }

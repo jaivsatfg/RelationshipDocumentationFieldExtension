@@ -10,6 +10,7 @@ import { AppContext, IAppContext } from '../IContext';
 import { IconButton, IIconProps, IStackTokens, ITooltipHostStyles, Stack, StackItem, TooltipHost } from 'office-ui-fabric-react';
 import LinkDocuments from './LinkDocuments';
 
+
 export interface IRelatedDocumentFieldExtensionProps {
   textValue: string;
   FSObjType: string;
@@ -103,13 +104,13 @@ export default class RelatedDocumentFieldExtension extends React.Component<IRela
             <Stack horizontal className={styles.relatedDocumentFieldExtension} tokens={stackTokens}>
               <StackItem className={styles.documentsRelacionatsItem} key={this.props.localListItemId}>
                 <TooltipHost
-                  content="Assignació de documents relacionats"
+                  content="Asignación de documentos relacionados"
                   calloutProps={calloutProps}
                   styles={hostStyles}
                   setAriaDescribedBy={false}>
                   <IconButton iconProps={textDocIcon} aria-label="TextDocumentSetting" onClick={this.onDocRelaLink} />
                 </TooltipHost>
-                {this.state.cellValue === undefined || this.state.cellValue.length === 0 ? <span>sense assignar</span> :
+                {this.state.cellValue === undefined || this.state.cellValue.length === 0 ? <span>sin asignar</span> :
                   <>
                     <ul>
                       {
@@ -127,7 +128,7 @@ export default class RelatedDocumentFieldExtension extends React.Component<IRela
                   </>
                 }
               </StackItem>
-            </Stack>
+            </Stack>  
             {!RelatedDocumentFieldExtension.modalIsOpen ?
               <LinkDocuments elementName={this.props.elementName}
                 isModalOpen={this.state.showModal}
@@ -135,7 +136,7 @@ export default class RelatedDocumentFieldExtension extends React.Component<IRela
                 closeModal={this.closeModal} items={this.state.cellValue}
               />
               : <></>
-            }
+            }          
           </Stack>
         </AppContext.Provider>
       );

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import * as jQuery from "jquery";
 
 import { Guid, Log } from '@microsoft/sp-core-library';
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
@@ -16,6 +17,7 @@ import { ITaxonomyElementT, ITaxonomyElementTL, ITaxonomyElementTM, ITaxonomyRes
 import { XMLParser } from 'fast-xml-parser';
 import RelatedDocumentFieldExtension, { IRelatedDocumentFieldExtensionProps } from './components/RelatedDocumentFieldExtension';
 import { dateAdd, PnPClientStorage } from "@pnp/core";
+
 
 /**
  * If your field customizer uses the ClientSideComponentProperties JSON input,
@@ -37,11 +39,18 @@ const LOG_SOURCE: string = 'RelatedDocumentFieldExtensionFieldCustomizer';
 export default class RelatedDocumentFieldExtensionFieldCustomizer
   extends BaseFieldCustomizer<IRelatedDocumentFieldExtensionFieldCustomizerProperties> {
 
+  constructor() {
+    super();
+    this.insertItem = this.insertItem.bind(this);
+    this.updatetItem = this.updatetItem.bind(this);
+    this.deleteItem = this.deleteItem.bind(this);
+  }
+
   private fieldConfig: IFieldConfig = {
     termStoreId: '',
     termSetId: '',
-    serveiTermId: '',
-    tipologiaTermId: '',
+    tiposServiciosTermId: '',
+    clasifDocsTermId: '',
     managerDocumentsUrl: '',
     managerDocumentsListId: ''
   };
@@ -59,8 +68,8 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
         this.getFieldConfig().then((fcfg: IFieldConfig) => {
           this.fieldConfig.termStoreId = fcfg.termStoreId || this.properties.termStoreId || 'fd67ea3b-3045-4cd7-a213-76a221c6482e';
           this.fieldConfig.termSetId = fcfg.termSetId || this.properties.termSetId || 'fd67ea3b-3045-4cd7-a213-76a221c6482e';
-          this.fieldConfig.serveiTermId = fcfg.serveiTermId || this.properties.servicesTermId || 'f5011dce-f5f6-49c4-b641-f07c065454da';
-          this.fieldConfig.tipologiaTermId = fcfg.tipologiaTermId || this.properties.notificationTypeTermId || 'e8247b94-53d4-46bf-9472-9dacda3d2a0c';
+          this.fieldConfig.tiposServiciosTermId = fcfg.tiposServiciosTermId || this.properties.servicesTermId || 'f5011dce-f5f6-49c4-b641-f07c065454da';
+          this.fieldConfig.clasifDocsTermId = fcfg.clasifDocsTermId || this.properties.notificationTypeTermId || 'e8247b94-53d4-46bf-9472-9dacda3d2a0c';
           this.fieldConfig.managerDocumentsUrl = fcfg.managerDocumentsUrl;
           this.fieldConfig.managerDocumentsListId = fcfg.managerDocumentsListId;
 
@@ -77,24 +86,25 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
           this.LoadTerms({
             termStoreId: this.fieldConfig.termStoreId,
             lcid: 1033,
-            termId: this.fieldConfig.tipologiaTermId,
+            termId: this.fieldConfig.clasifDocsTermId,
             termSetId: this.fieldConfig.termSetId
           }).then((tipologiaTerms: ISoapTaxonomyResponse[]) => {
             this.LoadTerms({
               termStoreId: this.fieldConfig.termStoreId,
               lcid: 1033,
-              termId: this.fieldConfig.serveiTermId,
+              termId: this.fieldConfig.tiposServiciosTermId,
               termSetId: this.fieldConfig.termSetId,
               tipologiasTerms: tipologiaTerms
             }).then((terms: ISoapTaxonomyResponse[]) => {
-              this.terms = terms;
-              store.local.put(keyLocalStore, terms, dateAdd(new Date(), "minute", 30));
+              const newValues: any[] = this.enrichTreeNodes(terms);
+              this.terms = newValues;
+              store.local.put(keyLocalStore, newValues, dateAdd(new Date(), "minute", 30));
               resolve();
             }).catch(() => {
-              reject("ERROR TRATANDO DE BUSCAR EL NODO SERVEI.");
+              reject("ERROR TRATANDO DE BUSCAR EL 'Tipos Servicios'.");
             });
           }).catch(() => {
-            reject("ERROR TRATANDO DE BUSCAR EL NODO TIPOLOGIA.");
+            reject("ERROR TRATANDO DE BUSCAR EL NODO 'Clasificación Documentos'.");
           });
         }).catch((a: string) => {
           console.log('Error in getFieldConfig():' + a);
@@ -108,7 +118,6 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
   public onRenderCell(event: IFieldCustomizerCellEventParameters): void {
     // Use this method to perform your custom cell rendering.
     // const text: string = `${this.properties.sampleText}: ${event.fieldValue}`;
-    let unitUrl: string = '';
     let documentsManagerUrl: string = '';
     let documentsManagerRelativeUrl: string = '';
     let documentsManagerListId: string = '';
@@ -119,7 +128,6 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
     if (this.context && this.context.pageContext && this.context.pageContext.list &&
       (this.context.pageContext.list.title.toLowerCase() === 'notificaciones'
         || this.context.pageContext?.list.title.toLowerCase() === 'DocumentosTrabajo')) {
-      unitUrl = this.context.pageContext.web.absoluteUrl;
       documentsManagerUrl = this.fieldConfig.managerDocumentsUrl;
       documentsManagerRelativeUrl = [''].concat(documentsManagerUrl.split('/').slice(3)).join('/');
       documentsManagerListTitle = 'DocumentosPublicados';
@@ -140,7 +148,7 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
     const props: IRelatedDocumentFieldExtensionProps = {
       terms: this.terms,
       pageContext: this.context.pageContext,
-      webUrl: unitUrl,
+      webUrl: this.context.pageContext.web.absoluteUrl,
       documentsManagerWebUrl: documentsManagerUrl,
       documentsManagerRelativeWebUrl: documentsManagerRelativeUrl,
       documentsManagerListId: documentsManagerListId,
@@ -353,10 +361,10 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
         Tener claro esto.
       */
 
-      const itemTitle = this.context && this.context.pageContext && this.context.pageContext.list ? this.context.pageContext.list.id : null;
+      //const itemTitle = this.context && this.context.pageContext && this.context.pageContext.list ? this.context.pageContext.list.id : null;
       const params = {
         '$select': 'Title,ItemValor',
-        '$filter': `Title eq '${itemTitle}' or Title eq 'PublicLibraryUrl' or Title eq 'PublicLibraryId'`
+        '$filter': `Title eq 'TaxonomyInformation' or Title eq 'PublicLibraryUrl' or Title eq 'PublicLibraryId'`
       };
 
 
@@ -370,8 +378,8 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
             type responseQuery = { value: itemValue[] };
             response.json().then((r: responseQuery) => {
               const termsIds: itemValue = r.value.filter((it: itemValue) => {
-                const itemTitle = this.context && this.context.pageContext && this.context.pageContext.list ? this.context.pageContext.list.id : '';
-                return it.Title.toLowerCase() === itemTitle.toString().toLocaleLowerCase();
+                //const itemTitle = this.context && this.context.pageContext && this.context.pageContext.list ? this.context.pageContext.list.id : '';
+                return it.Title.toLowerCase() === 'taxonomyinformation';
               })[0];
               const documentsPublicsUrl: itemValue = r.value.filter((it: itemValue) => {
                 return it.Title.toLocaleLowerCase() === 'publiclibraryurl';
@@ -385,10 +393,10 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
 
               if (currentValue.managerDocumentsUrl !== ''
                 && currentValue.managerDocumentsListId !== ''
-                && currentValue.serveiTermId !== undefined
+                && currentValue.tiposServiciosTermId !== undefined
                 && currentValue.termSetId !== undefined
                 && currentValue.termStoreId !== undefined
-                && currentValue.tipologiaTermId !== undefined) {
+                && currentValue.clasifDocsTermId !== undefined) {
                 store.local.put(keyLocalStore, currentValue, dateAdd(new Date(), "minute", 30));
               }
               resolve(currentValue);
@@ -448,6 +456,27 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
     }
     // handling primitive data types
     return instance;
+  }
+
+  private enrichTreeNodes(nodes: any[]) {
+    const re = /\'/gi;
+    return nodes.map(node => {
+      const firstLabel = node.labels?.[0]?.value || '';
+      let folderName = firstLabel;
+      if (node && node.info && node.info.length > 0) {
+        folderName = (node.info[0].parentLabel.split(';').splice(1).join('/') + '/' + node.text).replace(re, '\'\'');
+      }
+      const enrichedNode: any = {
+        ...node,
+        key: folderName.concat('-', node.id),
+        label: firstLabel,
+        data: firstLabel,
+        icon: '',
+        children: node.children?.length > 0 ? this.enrichTreeNodes(node.children) : [],
+      };
+
+      return enrichedNode;
+    });
   }
 
   private deleteItem(webUrl: string, listTitle: string, id: number): Promise<void> {
