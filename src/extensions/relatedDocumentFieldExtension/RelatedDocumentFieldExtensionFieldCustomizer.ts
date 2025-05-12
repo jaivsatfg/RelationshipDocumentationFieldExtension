@@ -1,6 +1,5 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import * as jQuery from "jquery";
 
 import { Guid, Log } from '@microsoft/sp-core-library';
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
@@ -369,7 +368,7 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
 
 
       const currentUrl = this.context.pageContext.web.absoluteUrl.concat(`/_api/web/Lists/GetByTitle('`, encodeURIComponent(listName), `')`,
-        '/items?', jQuery.param(params));
+        '/items?',  new URLSearchParams(params).toString());
 
       this.context.spHttpClient.get(currentUrl, SPHttpClient.configurations.v1)
         .then((response: SPHttpClientResponse) => {
