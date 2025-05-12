@@ -41,7 +41,6 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
     static contextType = AppContext;
     private treeInitialization: boolean = false;
     private modalClosing: boolean = false;
-    // private selectedItems: DocInfo[];
     private savedItems: DocInfo[];
     private isCallFromNotificationsList: boolean;
     private isCallFromDocsTrabajolList: boolean;
@@ -60,7 +59,6 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
             saving: false,
             errorMessage: ''
         }
-        // this.handleSelectedDocuments = this.handleSelectedDocuments.bind(this);
         this.insertSelectedItems = this.insertSelectedItems.bind(this);
         this.itemsSave = this.itemsSave.bind(this);
         this.selectedItemToBeRemoved = this.selectedItemToBeRemoved.bind(this);
@@ -68,17 +66,6 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
         this.treeNodeSelect = this.treeNodeSelect.bind(this);
         this.itemsToSelectionChange = this.itemsToSelectionChange.bind(this);
     }
-
-    // private handleSelectedDocuments(docs: DocInfo[]): void {
-    //     const ctx: IAppContext = this.context;
-    //     this.selectedItems = docs.map((d: DocInfo) => {
-    //         let currentUrl: string = d.url;
-    //         if (currentUrl.indexOf(ctx.documentsManagerRelativeWebUrl) != -1) {
-    //             currentUrl = '/' + d.url.toString().split('/').splice(3).join('/');
-    //         }
-    //         return Object.assign(d, { url: currentUrl });
-    //     });
-    // }
 
     private selectedItemToBeRemoved(sender: React.MouseEvent<HTMLDivElement>): void {
         const currentIdx: number = this.state.relatedItems.findIndex((doc: DocInfo) => {
@@ -211,7 +198,6 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                 });
             } else {
                 RelatedDocumentFieldExtension.modalIsOpen = true;
-                // this.createTree();
             }
         }
     }
@@ -559,52 +545,7 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
             });
         }
     }
-    // private treeSelectionChange = (e: TreeEventNodeEvent) => {
-
-    //     // const newSelection = { ...this.state.selectedTreeKeys };
-
-    //     // if (node.key) {
-    //     //     if (e.target.checked) {
-    //     //         newSelection[node.key] = { checked: true };
-    //     //     } else {
-    //     //         delete newSelection[node.key];
-    //     //     }
-
-    //     //     setSelectedKeys(newSelection);
-    //     // }
-
-    //     const currentInstance: LinkDocuments = this;
-
-    //     if (currentInstance.treeInitialization /*state !== 'checked' ||*/) {
-    //         return;
-    //     }
-
-    //     // const filtered: { [key: string]: { checked: boolean; partialChecked: boolean; } } = {};
-    //     // for (const key in e.value) {
-    //     //     if (e.value[key].checked) {
-    //     //         filtered[key] = e.value[key];
-    //     //     }
-    //     // }
-    //     // this.setState({
-    //     //     selectedTreeKeys: filtered
-    //     // });
-
-
-    //     // if (filtered && Object.keys(filtered).length > 0) {
-    //     //     const keyTerm: string = Object.keys(filtered)[0];
-    //     //     if (keyTerm) {
-    //     //         currentInstance.treeInitialization = true;
-    //     //         currentInstance.getDocuments(keyTerm).then((values: DocInfo[]) => {
-    //     //             currentInstance.treeInitialization = false;
-    //     //             currentInstance.setState({
-    //     //                 itemsToSelect: values
-    //     //             });
-    //     //         }).catch(() => {
-    //     //             currentInstance.treeInitialization = false;
-    //     //         });
-    //     //     }
-    //     // }
-    // }
+   
 
     private itemsToSelectionChange = (e: DataTableSelectionMultipleChangeEvent<DocInfo[]>): void => {
         const newSelection = e.value || []; // selección actualizada
@@ -620,18 +561,6 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
                 selectedItemsToAdd: newSelection
             });
         }
-
-        // const checked = (e.originalEvent as React.ChangeEvent<HTMLInputElement>).target.checked;
-        // if (checked) {
-        //     this.setState(prevState => ({
-        //         selectedItemsToAdd: [...prevState.selectedItemsToAdd, ...e.value]
-        //     }));
-        // } else {
-        //     const selectdIds = e.value.map(v => { return v.id });
-        //     this.setState(prevState => ({
-        //         selectedItemsToAdd: prevState.selectedItemsToAdd.filter((t) => { return selectdIds.indexOf(t.id) === -1 })
-        //     }));
-        // }
     }
 
 
