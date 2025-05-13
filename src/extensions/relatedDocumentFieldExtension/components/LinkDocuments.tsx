@@ -129,9 +129,9 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
             return { id: d.id, url: d.url, name: d.name };
         });
         this.manageRelatedDocumentsList().then(async () => {
-            /* Actualizo los campos LinksDocumentsRelacionats,DocuRelaIds y DocuRelaJson */
+            /* Actualizo los campos LinksDocumentosRelacionados,DocuRelaIds y DocuRelaJson */
             type updateValue = {
-                LinksDocumentsRelacionats?: string;
+                LinksDocumentosRelacionados?: string;
                 DocuRelaIds: string;
                 DocuRelaJson: string;
             }
@@ -144,7 +144,7 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
             }
             else {
                 objectToUpdate = {
-                    'LinksDocumentsRelacionats': documentsLinks,
+                    'LinksDocumentosRelacionados': documentsLinks,
                     'DocuRelaIds': documentsIds,
                     'DocuRelaJson': JSON.stringify(docRelaJson)
                 };

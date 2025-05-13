@@ -3,7 +3,7 @@
   "solution": {
     "name": "related-documents-field-extension-client-side-solution",
     "id": "cc7c47a9-afa9-477e-96c9-3d505c0e48dc",
-    "version": "1.0.0.0",
+    "version": "1.0.0.1",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
