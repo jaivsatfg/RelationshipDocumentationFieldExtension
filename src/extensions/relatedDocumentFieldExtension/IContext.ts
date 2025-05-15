@@ -7,11 +7,11 @@ export interface IAppContext {
   webUrl: string;
   documentsManagerWebUrl: string;                 //Web Url donde están los documentos públicos
   documentsManagerRelativeWebUrl: string;         //Web Url Relativa donde están los documentos públicos
-  documentsManagerListId: string;                 //Id de la lista con nombre {nnit}Documents donde están los documentos públicos. Ejemplo: ScoDocuments
-  documentsManagerListTitle: string;              //Title de la lista con nombre {nnit}Documents donde están los documentos públicos. Ejemplo: ScoDocuments
-  documentsManagerListItemId: number;              //Id del item que estoy relacionando de la lista con nombre {nnit}Documents donde están los documentos públicos. Ejemplo: ScoDocuments
-  localListTitle: string;                         //Title de la lista desde donde estoy realizando la relación. Puede ser desde Notificacions, DocsTreball o {Unit}Documents
-  localListId: Guid;                             //Id de la lista desde donde estoy realizando la relación.
+  documentsManagerListId: string;                 //Id de la lista donde están los documentos públicos. Ejemplo: DocumentosPublicados
+  documentsManagerListTitle: string;              //Title de la lista donde están los documentos públicos. Ejemplo: DocumentosPublicados
+  documentsManagerListItemId: number;             //Id del item que estoy relacionando de la lista donde están los documentos públicos. Ejemplo: DocumentosPublicados
+  localListTitle: string;                         //Title de la lista desde donde estoy realizando la relación. Puede ser desde Notificacions, DocumentosTrabajo o DocumentosPublicados
+  localListId: Guid;                              //Id de la lista desde donde estoy realizando la relación.
   localListItemId: number;                        //Id del item de la lista desde donde estoy realizando la relación. Aquí se actualizarán los campos DocRelaJson, LinksDocumentos y IdsDocumentosRelacionados
   spHttpClient: SPHttpClient | null;
   spHttpConfiguration: SPHttpClientConfiguration | null;

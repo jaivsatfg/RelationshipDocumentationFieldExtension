@@ -118,7 +118,7 @@ export default class RelatedDocumentFieldExtension extends React.Component<IRela
                           return (<>
                             <li>
                               <div>
-                                <a href={this.ctx.documentsManagerRelativeWebUrl + d.url} rel="noreferrer" target="_blank" data-interception="off">{d.name}</a>
+                                <a href={(this.ctx.localListTitle === this.ctx.documentsManagerListTitle ? '' : '') + d.url} rel="noreferrer" target="_blank" data-interception="off">{d.name}</a>
                               </div>
                             </li>
                           </>);
@@ -128,7 +128,7 @@ export default class RelatedDocumentFieldExtension extends React.Component<IRela
                   </>
                 }
               </StackItem>
-            </Stack>  
+            </Stack>
             {!RelatedDocumentFieldExtension.modalIsOpen ?
               <LinkDocuments elementName={this.props.elementName}
                 isModalOpen={this.state.showModal}
@@ -136,7 +136,7 @@ export default class RelatedDocumentFieldExtension extends React.Component<IRela
                 closeModal={this.closeModal} items={this.state.cellValue}
               />
               : <></>
-            }          
+            }
           </Stack>
         </AppContext.Provider>
       );

@@ -126,13 +126,13 @@ export default class RelatedDocumentFieldExtensionFieldCustomizer
 
     if (this.context && this.context.pageContext && this.context.pageContext.list &&
       (this.context.pageContext.list.title.toLowerCase() === 'notificaciones'
-        || this.context.pageContext?.list.title.toLowerCase() === 'DocumentosTrabajo')) {
+        || this.context.pageContext?.list.title.toLowerCase() === 'documentostrabajo')) {
       documentsManagerUrl = this.fieldConfig.managerDocumentsUrl;
       documentsManagerRelativeUrl = [''].concat(documentsManagerUrl.split('/').slice(3)).join('/');
       documentsManagerListTitle = 'DocumentosPublicados';
       documentsManagerListId = this.fieldConfig.managerDocumentsListId;
-      if (this.context.pageContext.list.title.toLowerCase() === 'docstreball') {
-        documentsManagerListItemId = event.listItem.getValueByName('PublicDocumentId');
+      if (this.context.pageContext.list.title.toLowerCase() === 'documentostrabajo') {
+        documentsManagerListItemId = event.listItem.getValueByName('IdDocumentoPublico');
       } else {
         elementName = event.listItem.getValueByName('Title');
       }

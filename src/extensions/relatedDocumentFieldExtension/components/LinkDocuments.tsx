@@ -545,7 +545,7 @@ class LinkDocuments extends React.Component<ILinkDocumentsProps, ILinkDocumentsS
             });
         }
     }
-   
+
 
     private itemsToSelectionChange = (e: DataTableSelectionMultipleChangeEvent<DocInfo[]>): void => {
         const newSelection = e.value || []; // selección actualizada

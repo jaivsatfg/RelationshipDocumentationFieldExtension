@@ -4,7 +4,7 @@
   "https": true,
   "serveConfigurations": {
     "default": {
-      "pageUrl": "https://{tenantDomain}/DocumentosPublicados/Forms/AllItems.aspx",
+      "pageUrl": "https://{tenantDomain}/Notificaciones/AllItems.aspx",
       "fieldCustomizers": {
         "DocuRelaJson": {
           "id": "5a9c0370-d597-4b95-9616-830585a24d63",
@@ -15,7 +15,7 @@
       }
     },
     "relatedDocumentFieldExtension": {
-      "pageUrl": "https://{tenantDomain}/DocumentosPublicados/Forms/AllItems.aspx",
+      "pageUrl": "https://{tenantDomain}/Notificaciones/AllItems.aspx",
       "fieldCustomizers": {
         "DocuRelaJson": {
           "id": "5a9c0370-d597-4b95-9616-830585a24d63",
